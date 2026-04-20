@@ -233,7 +233,7 @@
     selected.clear();
     buildGrid();
     try {
-      const res = await fetch(`$https://sfrqbvgxqqanczjfaavt.supabase.co/rest/v1/entries?venue=eq.${encodeURIComponent(venue)}&select=number`, {
+      const res = await fetch(`https://sfrqbvgxqqanczjfaavt.supabase.co/rest/v1/entries?venue=eq.${encodeURIComponent(venue)}&select=number`, {
         headers: {
           'apikey': SUPABASE_KEY,
           'Authorization': 'Bearer ' + SUPABASE_KEY

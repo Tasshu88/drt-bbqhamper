@@ -276,14 +276,17 @@
     ballNum.textContent = '?';
 
     // Rolling animation — cycle random numbers
-    let rollCount = 0;
-    const maxRolls = 28; // ~2.2 seconds at 80ms
-    rollInterval = setInterval(() => {
+    const startTime = Date.now();
+    const totalDuration = 5500;
+
+    function roll() {
+      const elapsed = Date.now() - startTime;
+      const progress = elapsed / totalDuration;
+
       const fake = Math.floor(Math.random() * 100) + 1;
       ballNum.textContent = fake;
-      rollCount++;
-      if (rollCount >= maxRolls) {
-        clearInterval(rollInterval);
+
+      if (elapsed >= totalDuration) {
         // Final reveal
         ballNum.textContent = winner.number;
         ball.classList.add('winner');
@@ -311,8 +314,16 @@
 
           winners.push({ venue, number: winner.number, name: winner.name || 'Guest', phone: winner.phone });
         }, 400);
+        return;
       }
-    }, 80);
+
+      // Slow down near the end
+      const delay = progress < 0.6 ? 60 : progress < 0.8 ? 100 : progress < 0.92 ? 160 : 260;
+      rollInterval = setTimeout(roll, delay);
+    }
+
+    roll();
+    const _unused = null;
   }
 
   function nextVenue() {

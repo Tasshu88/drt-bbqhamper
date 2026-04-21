@@ -89,11 +89,27 @@
   .panel-close { display: block; width: 100%; margin-top: 1.25rem; padding: 13px; border-radius: 12px; border: 1.5px solid var(--border); background: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: rgba(28,28,26,0.5); cursor: pointer; text-align: center; }
   .panel-close:hover { background: var(--cream); }
 
+
+  /* Live counter banner */
+  .counter-banner { background: var(--charcoal); color: white; text-align: center; padding: 10px 1rem; font-size: 13px; font-weight: 500; letter-spacing: 0.02em; position: sticky; top: 0; z-index: 50; animation: fadeUp 0.6s ease both; }
+  .counter-banner .count-num { color: var(--amber-light); font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
+  .counter-banner.urgent { background: #8B1A1A; }
+
+  /* Price reminder */
+  .price-reminder { display: none; background: var(--amber-pale); border: 1px solid rgba(212,130,10,0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 14px; color: var(--amber); font-weight: 500; text-align: center; }
+
+  /* Share button */
+  .share-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 1rem; padding: 13px; border-radius: 12px; border: 1.5px solid #25D366; background: none; color: #25D366; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+  .share-btn:hover { background: rgba(37,211,102,0.08); }
+  .share-icon { font-size: 18px; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>
 </head>
 <body>
+<div class="counter-banner" id="counter-banner">
+  Loading available numbers…
+</div>
 <div class="page">
   <div class="header">
     <div class="logo-ring">
@@ -133,6 +149,7 @@
         <div class="numbers-label">Circle your numbers <span class="req">*</span> <span id="taken-count" style="font-weight:400;color:rgba(28,28,26,0.35);font-size:11px;"></span></div>
         <div class="numbers-grid" id="numbers-grid"></div>
         <div id="numbers-error" class="error-msg">Please select at least one number.</div>
+        <div class="price-reminder" id="price-reminder"></div>
       </div>
       <div class="field">
         <label>Payment method <span class="req">*</span></label>
@@ -162,6 +179,7 @@
         The winners will be announced at the<br>
         <strong>Diss Park Festival, 4–6 July 2026.</strong>
       </div>
+      <a class="share-btn" id="share-btn" href="#" target="_blank"><span class="share-icon">💬</span> Tell a friend on WhatsApp</a>
     </div>
   </div>
   <div class="footer">Diss Round Table &mdash; Community Officer Programme 2026</div>
@@ -233,11 +251,10 @@
   <div class="panel">
     <div class="panel-handle"></div>
     <h2>About Round Table</h2>
-    <p>Diss & District Round Table 439 is about having fun, making new friends and trying something new.</p>
-    <p>We meet up every other Thursday and do events organised by our members to keep things new and interesting.</p>
-    <p>This BBQ Hamper Draw is one of the big fundraisers we will be doing this year. All proceeds go directly to local charities and community projects in and around Diss.</p>
-    <p>The big reveal happens at the <strong>Diss Park Festival, 6th July 2026</strong> — a free community event with live music, food, and entertainment. We'd love to see you there! Find out more at <a href="https://parkhoteldiss.com/" style="color:var(--amber);text-decoration:none;font-weight:500;">parkhoteldiss.com</a></p>
-    <p>Want to get involved? Find us on Facebook: <a href="https://www.facebook.com/DissRoundTable" style="color:var(--amber);text-decoration:none;font-weight:500;">Diss Round Table</a></p>
+    <p>Diss & District Round Table 439 is a local community organisation for men aged 18–45. We run events, raise money for good causes, and have a lot of fun doing it.</p>
+    <p>The BBQ Hamper Draw is one of several fundraisers we run throughout the year. All proceeds go directly to local charities and community projects in and around Diss.</p>
+    <p>The big reveal happens at the <strong>Diss Park Festival, 4–6 July 2026</strong> — a free community event with live music, food, and entertainment. We'd love to see you there!</p>
+    <p>Want to get involved? Find us on Facebook: <strong>Diss Round Table</strong>.</p>
     <button class="panel-close" onclick="closePanel('about-panel')">Close</button>
   </div>
 </div>
@@ -251,6 +268,33 @@
   let takenNumbers = new Set();
   const grid = document.getElementById('numbers-grid');
 
+  async function loadGlobalCount() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/entries?select=number`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      const data = await res.json();
+      const taken = data.length;
+      const remaining = (100 * 6) - taken; // 6 venues x 100 numbers
+      const banner = document.getElementById('counter-banner');
+      if (remaining <= 50) banner.classList.add('urgent');
+      banner.innerHTML = `🎟️ Only <span class="count-num">${remaining}</span> numbers remaining across all venues!`;
+    } catch(e) {
+      document.getElementById('counter-banner').textContent = '🎟️ Numbers going fast — enter now!';
+    }
+  }
+
+  function updatePriceReminder() {
+    const reminder = document.getElementById('price-reminder');
+    const count = selected.size;
+    if (count === 0) {
+      reminder.style.display = 'none';
+    } else {
+      reminder.style.display = 'block';
+      reminder.textContent = `You've selected ${count} number${count !== 1 ? 's' : ''} = £${count} — please have the right money ready!`;
+    }
+  }
+
   function buildGrid() {
     grid.innerHTML = '';
     for (let i = 1; i <= 100; i++) {
@@ -263,6 +307,7 @@
         if (takenNumbers.has(i)) return;
         if (selected.has(i)) { selected.delete(i); btn.classList.remove('selected'); }
         else { selected.add(i); btn.classList.add('selected'); }
+        updatePriceReminder();
       });
       grid.appendChild(btn);
     }
@@ -276,6 +321,7 @@
     takenNumbers = new Set();
     selected.clear();
     buildGrid();
+    updatePriceReminder();
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/entries?venue=eq.${encodeURIComponent(venue)}&select=number`, {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
@@ -289,6 +335,7 @@
 
   document.getElementById('location').addEventListener('change', function() { loadTakenNumbers(this.value); });
   buildGrid();
+  loadGlobalCount();
 
   document.getElementById('donation-form').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -319,6 +366,11 @@
         body: JSON.stringify(rows)
       });
       if (res.ok) {
+        // Set WhatsApp share link
+        const pageUrl = encodeURIComponent(window.location.href.split('?')[0]);
+        const msg = encodeURIComponent(`🎟️ I've just entered the Diss Round Table BBQ Hamper Draw! Pick your lucky numbers and enter here: ${decodeURIComponent(pageUrl)}`);
+        document.getElementById('share-btn').href = `https://wa.me/?text=${msg}`;
+
         if (payment_method === 'Card') {
           loadingMsg.textContent = "Redirecting to secure payment...";
           window.location.href = `${STRIPE_URL}?quantity=${selected.size}`;

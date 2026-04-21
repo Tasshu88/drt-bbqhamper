@@ -276,6 +276,53 @@
     ballNum.textContent = '?';
 
     // Rolling animation — cycle random numbers
+
+  // Web Audio context
+  let audioCtx = null;
+  function getAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  // Soft tick sound — short filtered noise burst
+  function playTick(pitch) {
+    try {
+      const ctx = getAudio();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(pitch || 180, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime((pitch || 180) * 0.6, ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.07);
+    } catch(e) {}
+  }
+
+  // Winner reveal — gentle ascending chime
+  function playWin() {
+    try {
+      const ctx = getAudio();
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+        gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + i * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
+        osc.start(ctx.currentTime + i * 0.12);
+        osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+      });
+    } catch(e) {}
+  }
+
     const startTime = Date.now();
     const totalDuration = 5500;
 
@@ -285,11 +332,14 @@
 
       const fake = Math.floor(Math.random() * 100) + 1;
       ballNum.textContent = fake;
+      const pitch = progress < 0.6 ? 220 : progress < 0.8 ? 180 : progress < 0.92 ? 150 : 120;
+      playTick(pitch);
 
       if (elapsed >= totalDuration) {
         // Final reveal
         ballNum.textContent = winner.number;
         ball.classList.add('winner');
+        playWin();
 
         setTimeout(() => {
           const nameEl = document.getElementById('winner-name');

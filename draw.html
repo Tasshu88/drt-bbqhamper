@@ -464,6 +464,26 @@
         ballNum.textContent = winNum;
         ball.classList.add('winner');
         playWin();
+
+        setTimeout(() => {
+          const nameEl = document.getElementById('winner-name');
+          nameEl.textContent = winner.name || 'Guest';
+          nameEl.style.display = 'block';
+          if (winner.phone && winner.phone !== 'Not provided') {
+            const phoneEl = document.getElementById('winner-phone');
+            phoneEl.textContent = winner.phone;
+            phoneEl.style.display = 'block';
+          }
+          setTimeout(() => {
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.textContent = currentIdx < drawQueue.length - 1 ? 'Next venue →' : 'See all winners →';
+            nextBtn.style.display = 'inline-block';
+          }, 800);
+        }, 400);
+      }
+    }
+
+    roll();
   }
 
   function nextVenue() {

@@ -97,6 +97,15 @@
   .winner-info-venue { font-size: 12px; color: rgba(255,255,255,0.35); }
   .winner-info-phone { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
 
+  .past-btn { margin-top: 1.25rem; padding: 10px 28px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: none; color: rgba(255,255,255,0.45); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .past-btn:hover { background: rgba(255,255,255,0.06); color: white; }
+  .past-winner-card { background: #1a1a17; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem; }
+  .past-ball { width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff8e1, var(--amber) 60%, #7a4500); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 12px rgba(212,130,10,0.3); }
+  .past-ball span { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 900; color: #3d1f00; }
+  .past-info-name { font-size: 15px; font-weight: 500; }
+  .past-info-venue { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+  .past-info-date { font-size: 11px; color: rgba(255,255,255,0.2); margin-top: 2px; }
+  .no-past { font-size: 13px; color: rgba(255,255,255,0.3); text-align: center; padding: 1rem 0; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes ballPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   @keyframes rollNums { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
@@ -128,6 +137,14 @@
     <div class="venues-preview" id="venues-preview"></div>
     <button class="start-btn" id="start-btn" disabled onclick="startDraw()">🎉 Start the Draw</button>
     <div class="entry-count" id="entry-count"></div>
+    <button class="past-btn" id="past-btn" onclick="showPastResults()" style="display:none;">📋 View past results</button>
+
+    <!-- Past results panel -->
+    <div id="past-results" style="display:none; margin-top:2rem; width:100%; max-width:480px;">
+      <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:1rem;">Previous draw results</div>
+      <div id="past-list"></div>
+      <button class="reset-btn" style="margin-top:1rem;" onclick="hidePastResults()">Close</button>
+    </div>
   </div>
 
   <!-- Draw screen -->
@@ -180,6 +197,7 @@
       document.getElementById('gate').style.display = 'none';
       document.getElementById('stage').style.display = 'block';
       loadAllVenues();
+      loadPastResults();
     } else {
       document.getElementById('gate-error').style.display = 'block';
       document.getElementById('pw-input').value = '';
@@ -193,6 +211,65 @@
   let currentIdx = 0;
   let winners = [];
   let rollInterval = null;
+
+  // Save winner to Supabase
+  async function saveWinner(venue, number, name, phone) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/winners`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({ venue, winning_number: number, winner_name: name, winner_phone: phone })
+      });
+    } catch(e) { console.error('Failed to save winner', e); }
+  }
+
+  async function loadPastResults() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/winners?select=*&order=drawn_at.desc`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      const data = await res.json();
+      if (data && data.length > 0) {
+        document.getElementById('past-btn').style.display = 'inline-block';
+        window._pastData = data;
+      }
+    } catch(e) {}
+  }
+
+  function showPastResults() {
+    const data = window._pastData || [];
+    const list = document.getElementById('past-list');
+    list.innerHTML = '';
+    if (data.length === 0) {
+      list.innerHTML = '<div class="no-past">No results recorded yet.</div>';
+    } else {
+      data.forEach(w => {
+        const date = new Date(w.drawn_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const card = document.createElement('div');
+        card.className = 'past-winner-card';
+        card.innerHTML = `
+          <div class="past-ball"><span>${w.winning_number}</span></div>
+          <div>
+            <div class="past-info-name">${w.winner_name || 'Guest'}</div>
+            <div class="past-info-venue">${w.venue}</div>
+            <div class="past-info-date">Drawn ${date}</div>
+          </div>`;
+        list.appendChild(card);
+      });
+    }
+    document.getElementById('past-results').style.display = 'block';
+    document.getElementById('past-btn').style.display = 'none';
+  }
+
+  function hidePastResults() {
+    document.getElementById('past-results').style.display = 'none';
+    document.getElementById('past-btn').style.display = 'inline-block';
+  }
 
   async function loadAllVenues() {
     try {

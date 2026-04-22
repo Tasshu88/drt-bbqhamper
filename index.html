@@ -173,7 +173,7 @@
   /* ── Form area ── */
   .form-area {
     background: var(--ash);
-    padding: 1.5rem 1.25rem 6rem;
+    padding: 1.5rem 1.25rem 8rem;
     max-width: 480px;
     margin: 1.5rem auto 0;
     border-radius: 20px 20px 0 0;
@@ -229,14 +229,17 @@
   /* Numbers grid */
   .numbers-label { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(42,33,24,0.45); margin-bottom: 10px; }
   .numbers-label .req { color: var(--fire); margin-left: 2px; }
-  .numbers-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
+  .numbers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  @media (min-width: 480px) { .numbers-grid { grid-template-columns: repeat(10, 1fr); gap: 5px; } }
   .num-btn {
-    aspect-ratio: 1; border-radius: 7px; border: 1.5px solid rgba(201,74,10,0.15);
+    aspect-ratio: 1; border-radius: 10px; border: 1.5px solid rgba(201,74,10,0.15);
     background: var(--ash); font-family: 'Abril Fatface', serif;
-    font-size: 13px; color: rgba(42,33,24,0.4);
+    font-size: 18px; color: rgba(42,33,24,0.4);
     cursor: pointer; transition: all 0.12s ease;
     display: flex; align-items: center; justify-content: center;
+    min-height: 52px;
   }
+  @media (min-width: 480px) { .num-btn { font-size: 13px; min-height: unset; border-radius: 7px; } }
   .num-btn:hover:not(.taken) { border-color: var(--ember); color: var(--ember); background: #FEF0E4; }
   .num-btn.selected { background: var(--fire); border-color: var(--fire); color: white; transform: scale(0.95); box-shadow: 0 2px 8px rgba(201,74,10,0.4); }
   .num-btn.taken { background: #ede9e3; border-color: #ddd8d0; color: #bbb; cursor: not-allowed; text-decoration: line-through; }
@@ -288,7 +291,7 @@
   .footer { text-align: center; padding: 1.5rem 0 0; font-size: 12px; color: rgba(42,33,24,0.3); font-weight: 600; }
 
   /* Bottom nav */
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--smoke); border-top: 1px solid rgba(255,255,255,0.08); display: flex; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--smoke); border-top: 1px solid rgba(255,255,255,0.08); display: flex; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); padding-bottom: env(safe-area-inset-bottom); }
   .nav-btn { flex: 1; padding: 11px 8px 15px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35); transition: color 0.15s; letter-spacing: 0.03em; }
   .nav-btn:hover { color: var(--gold); }
   .nav-btn .nav-icon { font-size: 19px; line-height: 1; }

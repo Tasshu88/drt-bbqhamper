@@ -469,6 +469,13 @@
         ball.classList.add('winner');
         playWin();
 
+        // Save winner to Supabase
+        const venueName = drawQueue[currentIdx].venue;
+        saveWinner(venueName, winNum, winner.name || 'Guest', winner.phone || '');
+
+        // Store in local winners array
+        winners.push({ venue: venueName, number: winNum, name: winner.name || 'Guest', phone: winner.phone || '' });
+
         setTimeout(() => {
           const nameEl = document.getElementById('winner-name');
           nameEl.textContent = winner.name || 'Guest';

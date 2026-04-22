@@ -334,73 +334,59 @@
     } catch(e) {}
   }
 
-    const startTime = Date.now();
-    const totalDuration = 5500;
-    // Pre-decide winner number so we roll INTO it naturally
+    // Pre-pick winner, build a sequence that ends on it
     const winNum = winner.number;
+    let tick = 0;
+
+    // Phase 1: fast random (40 ticks), Phase 2: slow random (15 ticks), Phase 3: count to winner
+    const fastTicks = 40;
+    const slowTicks = 15;
+
+    // Build final approach: last 8 numbers counting into winner
+    function buildApproach() {
+      const steps = [];
+      let n = winNum - 8;
+      for (let i = 0; i < 8; i++) {
+        n++;
+        if (n < 1) n = 100;
+        if (n > 100) n = 1;
+        steps.push(n);
+      }
+      // Make sure last step IS the winner
+      steps[steps.length - 1] = winNum;
+      return steps;
+    }
+    const approach = buildApproach();
+    let approachIdx = 0;
 
     function roll() {
-      const elapsed = Date.now() - startTime;
-      const progress = elapsed / totalDuration;
+      tick++;
 
-      if (elapsed >= totalDuration) {
-        // Final reveal - already showing winner number from last slow ticks
+      if (tick <= fastTicks) {
+        // Fast random phase
+        ballNum.textContent = Math.floor(Math.random() * 100) + 1;
+        playTick(220);
+        rollInterval = setTimeout(roll, 65);
+
+      } else if (tick <= fastTicks + slowTicks) {
+        // Slowing random phase
+        ballNum.textContent = Math.floor(Math.random() * 100) + 1;
+        const p = (tick - fastTicks) / slowTicks;
+        playTick(p < 0.5 ? 180 : 150);
+        rollInterval = setTimeout(roll, 80 + (tick - fastTicks) * 14);
+
+      } else if (approachIdx < approach.length) {
+        // Count directly into winner — no randomness
+        ballNum.textContent = approach[approachIdx];
+        playTick(120);
+        approachIdx++;
+        rollInterval = setTimeout(roll, 260 + approachIdx * 40);
+
+      } else {
+        // Land on winner
         ballNum.textContent = winNum;
         ball.classList.add('winner');
         playWin();
-
-        setTimeout(() => {
-          const nameEl = document.getElementById('winner-name');
-          nameEl.textContent = winner.name || 'Guest';
-          nameEl.style.display = 'block';
-
-          if (winner.phone && winner.phone !== 'Not provided') {
-            const phoneEl = document.getElementById('winner-phone');
-            phoneEl.textContent = winner.phone;
-            phoneEl.style.display = 'block';
-          }
-
-          setTimeout(() => {
-            const nextBtn = document.getElementById('next-btn');
-            if (idx < drawQueue.length - 1) {
-              nextBtn.textContent = 'Next venue →';
-            } else {
-              nextBtn.textContent = 'See all winners →';
-            }
-            nextBtn.style.display = 'inline-block';
-          }, 800);
-
-          winners.push({ venue, number: winner.number, name: winner.name || 'Guest', phone: winner.phone });
-        }, 400);
-        return;
-      }
-
-      // In the last 15% slow right down and count towards winner
-      let fake;
-      if (progress < 0.82) {
-        fake = Math.floor(Math.random() * 100) + 1;
-      } else {
-        // Drift towards winner number in final stretch
-        const remaining = winNum - (parseInt(ballNum.textContent) || 0);
-        const step = remaining > 0 ? 1 : -1;
-        const cur = parseInt(ballNum.textContent) || Math.floor(Math.random() * 100) + 1;
-        // Step closer each tick, wrapping 1-100
-        let next = cur + step;
-        if (next > 100) next = 1;
-        if (next < 1) next = 100;
-        fake = next;
-      }
-      ballNum.textContent = fake;
-      const pitch = progress < 0.6 ? 220 : progress < 0.8 ? 180 : progress < 0.9 ? 150 : 120;
-      playTick(pitch);
-
-      // Slow down near the end
-      const delay = progress < 0.6 ? 60 : progress < 0.8 ? 110 : progress < 0.9 ? 180 : 300;
-      rollInterval = setTimeout(roll, delay);
-    }
-
-    roll();
-    const _unused = null;
   }
 
   function nextVenue() {

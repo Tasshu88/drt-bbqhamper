@@ -251,6 +251,17 @@
   }
 
   function startDraw() {
+    // Unlock audio on iOS — must happen inside a user gesture
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      // Play a silent buffer to fully unlock
+      const buf = audioCtx.createBuffer(1, 1, 22050);
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      src.connect(audioCtx.destination);
+      src.start(0);
+    } catch(e) {}
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('draw-screen').style.display = 'flex';
     currentIdx = 0;

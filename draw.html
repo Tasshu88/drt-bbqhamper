@@ -336,19 +336,16 @@
 
     const startTime = Date.now();
     const totalDuration = 5500;
+    // Pre-decide winner number so we roll INTO it naturally
+    const winNum = winner.number;
 
     function roll() {
       const elapsed = Date.now() - startTime;
       const progress = elapsed / totalDuration;
 
-      const fake = Math.floor(Math.random() * 100) + 1;
-      ballNum.textContent = fake;
-      const pitch = progress < 0.6 ? 220 : progress < 0.8 ? 180 : progress < 0.92 ? 150 : 120;
-      playTick(pitch);
-
       if (elapsed >= totalDuration) {
-        // Final reveal
-        ballNum.textContent = winner.number;
+        // Final reveal - already showing winner number from last slow ticks
+        ballNum.textContent = winNum;
         ball.classList.add('winner');
         playWin();
 
@@ -378,8 +375,27 @@
         return;
       }
 
+      // In the last 15% slow right down and count towards winner
+      let fake;
+      if (progress < 0.82) {
+        fake = Math.floor(Math.random() * 100) + 1;
+      } else {
+        // Drift towards winner number in final stretch
+        const remaining = winNum - (parseInt(ballNum.textContent) || 0);
+        const step = remaining > 0 ? 1 : -1;
+        const cur = parseInt(ballNum.textContent) || Math.floor(Math.random() * 100) + 1;
+        // Step closer each tick, wrapping 1-100
+        let next = cur + step;
+        if (next > 100) next = 1;
+        if (next < 1) next = 100;
+        fake = next;
+      }
+      ballNum.textContent = fake;
+      const pitch = progress < 0.6 ? 220 : progress < 0.8 ? 180 : progress < 0.9 ? 150 : 120;
+      playTick(pitch);
+
       // Slow down near the end
-      const delay = progress < 0.6 ? 60 : progress < 0.8 ? 100 : progress < 0.92 ? 160 : 260;
+      const delay = progress < 0.6 ? 60 : progress < 0.8 ? 110 : progress < 0.9 ? 180 : 300;
       rollInterval = setTimeout(roll, delay);
     }
 
